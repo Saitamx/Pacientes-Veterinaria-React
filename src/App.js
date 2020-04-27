@@ -1,84 +1,63 @@
-import React, { Component } from "react";
-import "./bootstrap.min.css";
-import Header from "./components/Header";
-import NuevaCita from "./components/NuevaCita";
-import ListaCitas from "./components/ListaCitas";
+import React, { useState, useEffect } from "react";
+import "./index.css";
+import Formulario from "./components/Formulario.jsx";
+import Cita from "./components/Cita.jsx";
+function App() {
+  // Citas en local storage
+  let citasIniciales = JSON.parse(localStorage.getItem("arrayCitas"));
+  if (!citasIniciales) {
+    citasIniciales = [];
+  }
 
-class App extends Component {
-  state = {
-    citas: []
-  };
+  // Arreglo de citas
+  const [arrayCitas, setArrayCitas] = useState(citasIniciales);
 
-  // cuando la aplicación carga
-  componentDidMount(){
-    const citasLS = localStorage.getItem('citas');
-    if(citasLS) {
-      this.setState({
-        citas: JSON.parse(citasLS)
-      })
+  // useEffect para realizar operaciones cuando el state cambia
+  useEffect(() => {
+    // redeclaramos para evitar el warning de dependencia
+    let citasIniciales = JSON.parse(localStorage.getItem("arrayCitas"));
+
+    if (citasIniciales) {
+      localStorage.setItem("arrayCitas", JSON.stringify(arrayCitas));
+    } else {
+      localStorage.setItem("arrayCitas", JSON.stringify([]));
     }
-  }
+  }, [arrayCitas]); // dependencias
 
-  // cuando eliminamos o agregamos una nueva cita
-  componentDidUpdate(){
-    // local storage es limitado, sólo acepta strings
-    localStorage.setItem('citas', JSON.stringify(this.state.citas)); // combierte un arreglo de objetos a un string
-  }
-
-  crearNuevaCita = datos => {
-    // copiar el state actual
-    const citas = [...this.state.citas, datos];
-
-    // agregar el nuevo state
-    this.setState({
-      citas
-    });
+  // Funcion que tome las citas actuales y agregue la nueva
+  const crearCita = (cita) => {
+    setArrayCitas([...arrayCitas, cita]);
   };
 
-  // elimina las citas del state
-  eliminarCita = id => {
-    console.log(id);
-    console.log("Diste click");
+  // Funcion que elimina una cita por su id
+  const eliminarCita = (id) => {
+    const nuevasCitas = arrayCitas.filter((cita) => cita.id !== id);
+    setArrayCitas(nuevasCitas);
+  };
 
-    // tomar una copia del state ( siempre se debe guardar una copia al hacer cambios al state )
-    const citasActuales = [...this.state.citas];
+  // mensaje condicional
+  const titulo =
+    arrayCitas.length === 0 ? "No hay citas" : "Administra tus citas";
 
-    // utilizar filter para sacar el elemento @id del arreglo
-    const citas = citasActuales.filter(cita => cita.id !== id); // crea una nueva copia para agregarlo a citas
+  return (
+    <>
+      <h1>Administrador de Pacientes</h1>
 
-    // const productos = [
-    //   {id : 1, producto: 'Libro React'},
-    //   {id : 2, producto: 'Libro Node'}
-    // ]
-
-    // actualizar el state
-    this.setState({
-      citas
-    })
-  }
-
-  render() {
-    return (
       <div className="container">
-        <Header 
-          titulo="Administrador Pacientes Veterinaria" />
-
         <div className="row">
-          <div className="col-md-10 mx-auto">
-            <NuevaCita 
-              crearNuevaCita={this.crearNuevaCita} />
-
-            <div>
-              <ListaCitas
-                citas={this.state.citas}
-                eliminarCita={this.eliminarCita}
-              />
-            </div>
+          <div className="one-half column">
+            <Formulario crearCita={crearCita} />
+          </div>
+          <div className="one-half column">
+            <h2>{titulo}</h2>
+            {arrayCitas.map((cita) => (
+              <Cita key={cita.id} cita={cita} eliminarCita={eliminarCita} />
+            ))}
           </div>
         </div>
       </div>
-    );
-  }
+    </>
+  );
 }
 
 export default App;
